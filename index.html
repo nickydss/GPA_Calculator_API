@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>GPA Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: auto;
+      padding: 1rem;
+    }
+    h1 {
+      text-align: center;
+    }
+    .course {
+      margin-bottom: 1rem;
+    }
+    input {
+      margin-right: 0.5rem;
+      padding: 0.4rem;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      margin: 0.5rem 0.25rem;
+    }
+    #result {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: green;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>GPA Calculator</h1>
+  <div id="courses"></div>
+  <button onclick="addCourse()">Add Course</button>
+  <button onclick="calculateGPA()">Calculate GPA</button>
+  <div id="result"></div>
+
+  <script>
+    let courseCount = 0;
+
+    function addCourse() {
+      const container = document.getElementById("courses");
+      const div = document.createElement("div");
+      div.className = "course";
+      div.innerHTML = `
+        Grade: <input id="grade-${courseCount}" placeholder="e.g. A, B+" />
+        Credits: <input id="credit-${courseCount}" type="number" min="0" />
+      `;
+      container.appendChild(div);
+      courseCount++;
+    }
+
+    async function calculateGPA() {
+      const grades = [];
+      const credits = [];
+
+      for (let i = 0; i < courseCount; i++) {
+        const grade = document.getElementById(`grade-${i}`).value.trim();
+        const credit = parseInt(document.getElementById(`credit-${i}`).value);
+
+        if (grade && !isNaN(credit)) {
+          grades.push(grade);
+          credits.push(credit);
+        }
+      }
+
+      if (grades.length === 0) {
+        alert("Please enter at least one course.");
+        return;
+      }
+
+      try {
+        const response = await fetch("http://127.0.0.1:5000/gpa", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ grades, credits })
+        });
+
+        if (!response.ok) throw new Error("Server error");
+
+        const data = await response.json();
+        document.getElementById("result").innerText = `Your GPA is: ${data.gpa.toFixed(2)}`;
+      } catch (error) {
+        console.error(error);
+        alert("There was an error calculating your GPA.");
+      }
+    }
+
+    // Start with one course row by default
+    addCourse();
+  </script>
+</body>
+</html>
